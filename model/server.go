@@ -1,4 +1,4 @@
-package server
+package model
 
 import (
 	"context"
@@ -8,14 +8,29 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"io"
 	"log"
-	"model/model"
 	"net/http"
 )
 
+type RPCRequest struct {
+	Method string      `json:"method"`
+	Params interface{} `json:"params"`
+}
+
+type RPCResponse struct {
+	Result interface{} `json:"result,omitempty"`
+	Error  *RPCError   `json:"error,omitempty"`
+}
+
+type RPCError struct {
+	Code    int    `json:"error_code"`
+	Message string `json:"error_message"`
+}
+
 func WebServer() {
-	fmt.Println("Server started! http://localhost:777/EndPoint")
+	fmt.Println("Server started! https://localhost:777/EndPoint")
 	http.HandleFunc("/EndPoint", Handler)
-	err := http.ListenAndServe(":777", nil)
+	//err := http.ListenAndServe("192.168.0.77:777", nil)
+	err := http.ListenAndServe("192.168.127.187:777", nil)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -33,26 +48,25 @@ func DataBase() *mongo.Client {
 
 func Handler(w http.ResponseWriter, r *http.Request) {
 	data, _ := io.ReadAll(r.Body)
-	var request model.RPCRequest
-	var response model.RPCResponse
+	var request RPCRequest
+	var response RPCResponse
 	conn := DataBase()
 	db := conn.Database("Elmakon")
 	json.Unmarshal(data, &request)
-
 	switch request.Method {
 	case "card.add":
 		{
-			response = model.CardAdd(request.Params, db)
+			response = CardAdd(request.Params, db)
 		}
 		break
 	case "installment.pay":
 		{
-			response = model.InstallmentPayment(request.Params, db)
+			response = InstallmentPayment(request.Params, db)
 		}
 		break
 	case "user.get":
 		{
-			response = model.UserAuth(request.Params, db)
+			response = UserAuth(request.Params, db)
 		}
 		break
 	}
