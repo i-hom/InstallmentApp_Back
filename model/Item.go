@@ -1,6 +1,11 @@
 package model
 
-import "go.mongodb.org/mongo-driver/bson/primitive"
+import (
+	"context"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
+)
 
 //==================BSON=======================
 
@@ -31,4 +36,19 @@ type JItem struct {
 	FullName string `json:"fullName"`
 	Image    string `json:"image"`
 	Category string `json:"category"`
+}
+
+func GetItem(id primitive.ObjectID, db *mongo.Database) (JItem, error) {
+	var item BItem
+	var category Category
+	var jItem JItem
+	if err := db.Collection("Items").FindOne(context.TODO(), bson.M{"_id": id}).Decode(&item); err != nil {
+		return JItem{}, err
+	}
+	if err := db.Collection("Categories").FindOne(context.TODO(), bson.M{"_id": item.Category}).Decode(&category); err != nil {
+		return JItem{}, err
+	}
+	jItem = item.ToJItem()
+	jItem.Category = category.Name
+	return jItem, nil
 }

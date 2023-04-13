@@ -3,6 +3,7 @@ package model
 import (
 	"context"
 	"encoding/json"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
@@ -40,4 +41,11 @@ func CardAdd(params interface{}, db *mongo.Database) RPCResponse {
 	db.Collection("Cards").InsertOne(context.TODO(), cardData)
 
 	return RPCResponse{Result: cardData}
+}
+
+func GetCards(ownerID primitive.ObjectID, db *mongo.Database) []BCard {
+	var cards []BCard
+	curr, _ := db.Collection("Cards").Find(context.TODO(), bson.M{"ownerid": ownerID})
+	curr.All(context.TODO(), &cards)
+	return cards
 }

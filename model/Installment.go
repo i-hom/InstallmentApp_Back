@@ -6,6 +6,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"time"
 )
 
 //==================BSON=======================
@@ -34,17 +35,18 @@ func (installment *BInstallment) ToJInstallment() JInstallment {
 
 type JInstallment struct {
 	ID             primitive.ObjectID `bson:"_id"`
-	ElmakonID      string             `json:"elmakonId"`
+	ElmakonID      string             `json:"elmakonid"`
 	Item           JItem              `json:"item"`
 	Balance        int                `json:"balance"`
 	IsActive       bool               `json:"isActive"`
 	MonthlyPayment int                `json:"monthlyPayment"`
+	Payments       []Payment          `json:"payments"`
 }
 
 type InstallmentPay struct {
-	InstallmentID primitive.ObjectID `json:"installmentId"`
-	CardID        primitive.ObjectID `json:"number"`
-	Value         int                `json:"value"`
+	InstallmentID primitive.ObjectID `json:"installment_id"`
+	CardID        primitive.ObjectID `json:"card_id"`
+	Amount        int                `json:"amount"`
 }
 
 func InstallmentPayment(params interface{}, db *mongo.Database) RPCResponse {
@@ -59,16 +61,16 @@ func InstallmentPayment(params interface{}, db *mongo.Database) RPCResponse {
 	var installment BInstallment
 	db.Collection("Installments").FindOne(context.TODO(), bson.M{"_id": installmentData.InstallmentID}).Decode(&installment)
 
-	if cardData.Balance < installmentData.Value {
+	if cardData.Balance < installmentData.Amount {
 		return RPCResponse{Error: &RPCError{Code: 3, Message: "Insufficient balance"}}
 	}
 
-	if installment.Balance < installmentData.Value {
+	if installment.Balance < installmentData.Amount {
 		return RPCResponse{Error: &RPCError{Code: 6, Message: "U paid a lot"}}
 	}
 
-	cardData.Balance -= installmentData.Value
-	installment.Balance -= installmentData.Value
+	cardData.Balance -= installmentData.Amount
+	installment.Balance -= installmentData.Amount
 
 	_, cardDeposit := db.Collection("Cards").UpdateOne(context.TODO(), bson.M{"_id": installmentData.CardID}, bson.M{"$set": cardData})
 	_, installmentDeposit := db.Collection("Installments").UpdateOne(context.TODO(), bson.M{"_id": installmentData.InstallmentID}, bson.M{"$set": installment})
@@ -82,6 +84,12 @@ func InstallmentPayment(params interface{}, db *mongo.Database) RPCResponse {
 		installment.IsActive = false
 		db.Collection("Installments").UpdateOne(context.TODO(), bson.M{"elmakonid": installment.ID}, bson.M{"$set": installment})
 	}
+
+	now := time.Now().Format("2006-01-02 15:04:05")
+
+	db.Collection("Payments").InsertOne(context.TODO(), Payment{
+		installment.ElmakonID, installmentData.Amount, cardData.Number, now,
+	})
 
 	return RPCResponse{Result: "Successfully paid installment"}
 }

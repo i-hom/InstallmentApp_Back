@@ -27,10 +27,11 @@ type RPCError struct {
 }
 
 func WebServer() {
-	fmt.Println("Server started! https://localhost:777/EndPoint")
+	fmt.Println("Server started! https://localhost:7777/EndPoint")
 	http.HandleFunc("/EndPoint", Handler)
-	//err := http.ListenAndServe("192.168.0.77:777", nil)
-	err := http.ListenAndServe("192.168.127.187:777", nil)
+	//err := http.ListenAndServe("192.168.0.77:7777", nil)
+	err := http.ListenAndServe("192.168.233.88:7777", nil)
+	//err := http.ListenAndServe("localhost:7777", nil)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -69,6 +70,10 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 			response = UserAuth(request.Params, db)
 		}
 		break
+	default:
+		{
+			response = RPCResponse{Error: &RPCError{Code: 1, Message: "Method not found"}}
+		}
 	}
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(response); err != nil {
