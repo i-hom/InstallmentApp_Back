@@ -1,9 +1,8 @@
-package model
+package internal
 
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -51,14 +50,16 @@ func UserAuth(params interface{}, db *mongo.Database) RPCResponse {
 	var userAuth UserLog
 	json.Unmarshal(GetRaw(params), &userAuth)
 	if userAuth.PhoneNumber == "" || userAuth.Password == "" {
-		err := RPCError{Code: 1, Message: "Missing one of params"}
-		fmt.Println(err)
-		return RPCResponse{Error: &err}
+		return RPCResponse{Code: 1, Message: "Missing one of params"}
 	}
 
 	var buser BUser
 	if db.Collection("Users").FindOne(context.TODO(), bson.M{"phonenumber": userAuth.PhoneNumber, "password": userAuth.Password}).Decode(&buser) != nil {
-		return RPCResponse{Error: &RPCError{Code: 4, Message: "User not found"}}
+		return RPCResponse{Code: 4, Message: "User not found"}
+	}
+
+	if buser.ID.IsZero() {
+		return RPCResponse{Data: BUser{}}
 	}
 
 	var juser JUser
@@ -76,5 +77,9 @@ func UserAuth(params interface{}, db *mongo.Database) RPCResponse {
 	}
 	juser.Installment = jinstallment
 	juser.Card = GetCards(buser.ID, db)
+<<<<<<< refs/remotes/origin/master:model/User.go
 	return RPCResponse{Result: juser}
+=======
+	return RPCResponse{Data: juser}
+>>>>>>> Update logic and cleanup code:internal/User.go
 }

@@ -1,4 +1,4 @@
-package model
+package internal
 
 import (
 	"context"
@@ -10,6 +10,7 @@ import (
 //==================BSON=======================
 
 type BItem struct {
+	ID       primitive.ObjectID `bson:"_id"`
 	Brand    string             `json:"brand"`
 	FullName string             `json:"fullName"`
 	Image    string             `json:"image"`
@@ -45,10 +46,18 @@ func GetItem(id primitive.ObjectID, db *mongo.Database) (JItem, error) {
 	if err := db.Collection("Items").FindOne(context.TODO(), bson.M{"_id": id}).Decode(&item); err != nil {
 		return JItem{}, err
 	}
+<<<<<<< refs/remotes/origin/master:model/Item.go
 	if err := db.Collection("Categories").FindOne(context.TODO(), bson.M{"_id": item.Category}).Decode(&category); err != nil {
+=======
+	if err := db.Collection("Category").FindOne(context.TODO(), bson.M{"_id": item.Category}).Decode(&category); err != nil {
+>>>>>>> Update logic and cleanup code:internal/Item.go
 		return JItem{}, err
 	}
 	jItem = item.ToJItem()
 	jItem.Category = category.Name
+<<<<<<< refs/remotes/origin/master:model/Item.go
+=======
+
+>>>>>>> Update logic and cleanup code:internal/Item.go
 	return jItem, nil
 }

@@ -1,4 +1,4 @@
-package model
+package internal
 
 import (
 	"context"
@@ -53,7 +53,7 @@ func InstallmentPayment(params interface{}, db *mongo.Database) RPCResponse {
 	var installmentData InstallmentPay
 	json.Unmarshal(GetRaw(params), &installmentData)
 	if installmentData.InstallmentID.IsZero() || installmentData.CardID.IsZero() {
-		return RPCResponse{Error: &RPCError{Code: 1, Message: "Missing one of params"}}
+		return RPCResponse{Code: 1, Message: "Missing one of params"}
 	}
 	var cardData BCard
 	db.Collection("Cards").FindOne(context.TODO(), bson.M{"_id": installmentData.CardID}).Decode(&cardData)
@@ -62,11 +62,19 @@ func InstallmentPayment(params interface{}, db *mongo.Database) RPCResponse {
 	db.Collection("Installments").FindOne(context.TODO(), bson.M{"_id": installmentData.InstallmentID}).Decode(&installment)
 
 	if cardData.Balance < installmentData.Amount {
+<<<<<<< refs/remotes/origin/master:model/Installment.go
 		return RPCResponse{Error: &RPCError{Code: 3, Message: "Insufficient balance"}}
 	}
 
 	if installment.Balance < installmentData.Amount {
 		return RPCResponse{Error: &RPCError{Code: 6, Message: "U paid a lot"}}
+=======
+		return RPCResponse{Code: 3, Message: "Insufficient balance"}
+	}
+
+	if installment.Balance < installmentData.Amount {
+		return RPCResponse{Code: 6, Message: "U paid a lot"}
+>>>>>>> Update logic and cleanup code:internal/Installment.go
 	}
 
 	cardData.Balance -= installmentData.Amount
@@ -76,8 +84,7 @@ func InstallmentPayment(params interface{}, db *mongo.Database) RPCResponse {
 	_, installmentDeposit := db.Collection("Installments").UpdateOne(context.TODO(), bson.M{"_id": installmentData.InstallmentID}, bson.M{"$set": installment})
 
 	if cardDeposit != nil || installmentDeposit != nil {
-		err := RPCError{Code: 5, Message: "Failed to deposit"}
-		return RPCResponse{Error: &err}
+		return RPCResponse{Code: 5, Message: "Failed to deposit"}
 	}
 
 	if installment.Balance == 0 {
@@ -91,5 +98,9 @@ func InstallmentPayment(params interface{}, db *mongo.Database) RPCResponse {
 		installment.ElmakonID, installmentData.Amount, cardData.Number, now,
 	})
 
+<<<<<<< refs/remotes/origin/master:model/Installment.go
 	return RPCResponse{Result: "Successfully paid installment"}
+=======
+	return RPCResponse{Code: 0, Message: "Successfully paid installment"}
+>>>>>>> Update logic and cleanup code:internal/Installment.go
 }

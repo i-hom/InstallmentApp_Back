@@ -1,4 +1,4 @@
-package model
+package internal
 
 import (
 	"context"
@@ -17,22 +17,26 @@ type RPCRequest struct {
 }
 
 type RPCResponse struct {
-	Result interface{} `json:"result,omitempty"`
-	Error  *RPCError   `json:"error,omitempty"`
-}
-
-type RPCError struct {
-	Code    int    `json:"error_code"`
-	Message string `json:"error_message"`
+	Code    int         `json:"code,omitempty"`
+	Message string      `json:"msg,omitempty"`
+	Data    interface{} `json:"data,omitempty"`
 }
 
 func WebServer() {
+<<<<<<< refs/remotes/origin/master:model/server.go
 	fmt.Println("Server started! https://localhost:7777/EndPoint")
 	http.HandleFunc("/EndPoint", Handler)
 	//err := http.ListenAndServe("192.168.0.77:7777", nil)
 	err := http.ListenAndServe("192.168.233.88:7777", nil)
 	//err := http.ListenAndServe("localhost:7777", nil)
 	if err != nil {
+=======
+	urls := []string{"192.168.0.77:7777", "192.168.0.162:7777", "192.168.233.88:7777", "localhost:7777"}
+	url := urls[0]
+	fmt.Printf("Server started! %s/EndPoint", url)
+	http.HandleFunc("/EndPoint", Handler)
+	if err := http.ListenAndServe(url, nil); err != nil {
+>>>>>>> Update logic and cleanup code:internal/server.go
 		log.Fatal(err)
 	}
 }
@@ -52,8 +56,9 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	var request RPCRequest
 	var response RPCResponse
 	conn := DataBase()
-	db := conn.Database("Elmakon")
+	db := conn.Database("Installment_App")
 	json.Unmarshal(data, &request)
+
 	switch request.Method {
 	case "card.add":
 		{
@@ -72,7 +77,11 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		break
 	default:
 		{
+<<<<<<< refs/remotes/origin/master:model/server.go
 			response = RPCResponse{Error: &RPCError{Code: 1, Message: "Method not found"}}
+=======
+			response = RPCResponse{Code: 1, Message: "Method not found"}
+>>>>>>> Update logic and cleanup code:internal/server.go
 		}
 	}
 	w.Header().Set("Content-Type", "application/json")

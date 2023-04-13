@@ -1,9 +1,7 @@
 package main
 
-import (
-	"model/model"
-)
+import "internal/internal"
 
 func main() {
-	model.WebServer()
+	internal.WebServer()
 }
