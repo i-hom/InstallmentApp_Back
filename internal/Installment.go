@@ -62,19 +62,11 @@ func InstallmentPayment(params interface{}, db *mongo.Database) RPCResponse {
 	db.Collection("Installments").FindOne(context.TODO(), bson.M{"_id": installmentData.InstallmentID}).Decode(&installment)
 
 	if cardData.Balance < installmentData.Amount {
-<<<<<<< refs/remotes/origin/master:model/Installment.go
-		return RPCResponse{Error: &RPCError{Code: 3, Message: "Insufficient balance"}}
-	}
-
-	if installment.Balance < installmentData.Amount {
-		return RPCResponse{Error: &RPCError{Code: 6, Message: "U paid a lot"}}
-=======
 		return RPCResponse{Code: 3, Message: "Insufficient balance"}
 	}
 
 	if installment.Balance < installmentData.Amount {
 		return RPCResponse{Code: 6, Message: "U paid a lot"}
->>>>>>> Update logic and cleanup code:internal/Installment.go
 	}
 
 	cardData.Balance -= installmentData.Amount
@@ -98,9 +90,5 @@ func InstallmentPayment(params interface{}, db *mongo.Database) RPCResponse {
 		installment.ElmakonID, installmentData.Amount, cardData.Number, now,
 	})
 
-<<<<<<< refs/remotes/origin/master:model/Installment.go
-	return RPCResponse{Result: "Successfully paid installment"}
-=======
 	return RPCResponse{Code: 0, Message: "Successfully paid installment"}
->>>>>>> Update logic and cleanup code:internal/Installment.go
 }

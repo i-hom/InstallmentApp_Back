@@ -77,9 +77,5 @@ func UserAuth(params interface{}, db *mongo.Database) RPCResponse {
 	}
 	juser.Installment = jinstallment
 	juser.Card = GetCards(buser.ID, db)
-<<<<<<< refs/remotes/origin/master:model/User.go
-	return RPCResponse{Result: juser}
-=======
 	return RPCResponse{Data: juser}
->>>>>>> Update logic and cleanup code:internal/User.go
 }

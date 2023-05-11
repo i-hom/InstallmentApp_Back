@@ -49,10 +49,3 @@ func GetCards(ownerID primitive.ObjectID, db *mongo.Database) []BCard {
 	curr.All(context.TODO(), &cards)
 	return cards
 }
-
-func GetCards(ownerID primitive.ObjectID, db *mongo.Database) []BCard {
-	var cards []BCard
-	curr, _ := db.Collection("Cards").Find(context.TODO(), bson.M{"ownerid": ownerID})
-	curr.All(context.TODO(), &cards)
-	return cards
-}
