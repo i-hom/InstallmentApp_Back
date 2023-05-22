@@ -1,4 +1,4 @@
-package internal
+package installment_back
 
 import (
 	"context"
@@ -43,14 +43,14 @@ type JInstallment struct {
 	Payments       []Payment          `json:"payments"`
 }
 
-type InstallmentPay struct {
+type InstallmentPayment struct {
 	InstallmentID primitive.ObjectID `json:"installment_id"`
 	CardID        primitive.ObjectID `json:"card_id"`
 	Amount        int                `json:"amount"`
 }
 
-func InstallmentPayment(params interface{}, db *mongo.Database) RPCResponse {
-	var installmentData InstallmentPay
+func InstallmentPay(params interface{}, db *mongo.Database) RPCResponse {
+	var installmentData InstallmentPayment
 	json.Unmarshal(GetRaw(params), &installmentData)
 	if installmentData.InstallmentID.IsZero() || installmentData.CardID.IsZero() {
 		return RPCResponse{Code: 1, Message: "Missing one of params"}
@@ -91,4 +91,18 @@ func InstallmentPayment(params interface{}, db *mongo.Database) RPCResponse {
 	})
 
 	return RPCResponse{Code: 0, Message: "Successfully paid installment"}
+}
+
+func InstallmentsGet(ownerID primitive.ObjectID, db *mongo.Database) ([]JInstallment, error) {
+	var installments []BInstallment
+	var jinstallments []JInstallment
+	curr, err := db.Collection("Installments").Find(context.TODO(), bson.M{"ownerid": ownerID})
+	curr.All(context.TODO(), &installments)
+	for _, i := range installments {
+		var installment = i.ToJInstallment()
+		installment.Item, _ = ItemGet(i.ItemID, db)
+		installment.Payments = PaymentsGet(i.ElmakonID, db)
+		jinstallments = append(jinstallments, installment)
+	}
+	return jinstallments, err
 }

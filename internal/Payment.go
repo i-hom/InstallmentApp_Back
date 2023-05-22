@@ -1,4 +1,4 @@
-package internal
+package installment_back
 
 import (
 	"context"
@@ -13,7 +13,7 @@ type Payment struct {
 	Date      string `json:"date"`
 }
 
-func GetPayments(elmakonID string, db *mongo.Database) []Payment {
+func PaymentsGet(elmakonID string, db *mongo.Database) []Payment {
 	var payments []Payment
 	curr, _ := db.Collection("Payments").Find(context.TODO(), bson.M{"elmakonid": elmakonID})
 	curr.All(context.TODO(), &payments)

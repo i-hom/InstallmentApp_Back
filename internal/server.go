@@ -1,4 +1,4 @@
-package internal
+package installment_back
 
 import (
 	"context"
@@ -58,12 +58,12 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		break
 	case "installment.pay":
 		{
-			response = InstallmentPayment(request.Params, db)
+			response = InstallmentPay(request.Params, db)
 		}
 		break
 	case "user.get":
 		{
-			response = UserAuth(request.Params, db)
+			response = UserGet(request.Params, db)
 		}
 		break
 	default:

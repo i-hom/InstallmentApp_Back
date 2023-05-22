@@ -1,4 +1,4 @@
-package internal
+package installment_back
 
 import (
 	"context"
@@ -46,7 +46,7 @@ type UserLog struct {
 	Password    string `json:"password"`
 }
 
-func UserAuth(params interface{}, db *mongo.Database) RPCResponse {
+func UserGet(params interface{}, db *mongo.Database) RPCResponse {
 	var userAuth UserLog
 	json.Unmarshal(GetRaw(params), &userAuth)
 	if userAuth.PhoneNumber == "" || userAuth.Password == "" {
@@ -64,18 +64,7 @@ func UserAuth(params interface{}, db *mongo.Database) RPCResponse {
 
 	var juser JUser
 	juser = buser.ToJUser()
-
-	var installments []BInstallment
-	var jinstallment []JInstallment
-	curr, _ := db.Collection("Installments").Find(context.TODO(), bson.M{"ownerid": buser.ID})
-	curr.All(context.TODO(), &installments)
-	for _, i := range installments {
-		var installment = i.ToJInstallment()
-		installment.Item, _ = GetItem(i.ItemID, db)
-		installment.Payments = GetPayments(i.ElmakonID, db)
-		jinstallment = append(jinstallment, installment)
-	}
-	juser.Installment = jinstallment
-	juser.Card = GetCards(buser.ID, db)
+	juser.Installment, _ = InstallmentsGet(buser.ID, db)
+	juser.Card = CardsGet(buser.ID, db)
 	return RPCResponse{Data: juser}
 }

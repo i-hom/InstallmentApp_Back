@@ -1,4 +1,4 @@
-package internal
+package installment_back
 
 import (
 	"context"
@@ -22,8 +22,8 @@ type BCard struct {
 type AddCard struct {
 	Number  string             `json:"number"`
 	ExpDate string             `json:"expDate"`
-	Value   int                `json:"value"`
-	OwnerId primitive.ObjectID `json:"ownerId"`
+	Balance int                `json:"balance"`
+	OwnerId primitive.ObjectID `bson:"ownerid"`
 }
 
 func CardAdd(params interface{}, db *mongo.Database) RPCResponse {
@@ -38,12 +38,14 @@ func CardAdd(params interface{}, db *mongo.Database) RPCResponse {
 		return RPCResponse{Code: 2, Message: "Card number should be 16 digits"}
 	}
 
+	cardData.Balance = 1000000
+
 	db.Collection("Cards").InsertOne(context.TODO(), cardData)
 
 	return RPCResponse{Code: 0, Message: "Card added"}
 }
 
-func GetCards(ownerID primitive.ObjectID, db *mongo.Database) []BCard {
+func CardsGet(ownerID primitive.ObjectID, db *mongo.Database) []BCard {
 	var cards []BCard
 	curr, _ := db.Collection("Cards").Find(context.TODO(), bson.M{"ownerid": ownerID})
 	curr.All(context.TODO(), &cards)

@@ -1,4 +1,4 @@
-package internal
+package installment_back
 
 import (
 	"context"
@@ -39,7 +39,7 @@ type JItem struct {
 	Category string `json:"category"`
 }
 
-func GetItem(id primitive.ObjectID, db *mongo.Database) (JItem, error) {
+func ItemGet(id primitive.ObjectID, db *mongo.Database) (JItem, error) {
 	var item BItem
 	var category Category
 	var jItem JItem

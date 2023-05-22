@@ -1,8 +1,8 @@
-module internal
+module installment_back
 
 go 1.20
 
-require go.mongodb.org/mongo-driver v1.11.2
+require go.mongodb.org/mongo-driver v1.11.6
 
 require (
 	github.com/golang/snappy v0.0.1 // indirect

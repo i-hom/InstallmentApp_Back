@@ -1,7 +1,7 @@
 package main
 
-import "internal/internal"
+import installment_back "installment_back/internal"
 
 func main() {
-	internal.WebServer()
+	installment_back.WebServer()
 }
