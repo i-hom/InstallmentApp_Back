@@ -21,8 +21,8 @@ type BInstallment struct {
 	ItemID         primitive.ObjectID `json:"itemId"`
 }
 
-func (installment *BInstallment) ToJInstallment() JInstallment {
-	return JInstallment{
+func (installment *BInstallment) ToJInstallment() Installment {
+	return Installment{
 		ID:             installment.ID,
 		ElmakonID:      installment.ElmakonID,
 		Balance:        installment.Balance,
@@ -33,7 +33,7 @@ func (installment *BInstallment) ToJInstallment() JInstallment {
 
 //===================JSON=======================
 
-type JInstallment struct {
+type Installment struct {
 	ID             primitive.ObjectID `bson:"_id"`
 	ElmakonID      string             `json:"elmakonid"`
 	Item           JItem              `json:"item"`
@@ -49,13 +49,13 @@ type InstallmentPayment struct {
 	Amount        int                `json:"amount"`
 }
 
-func InstallmentPay(params interface{}, db *mongo.Database) RPCResponse {
+func (inst *Installment) Pay(params interface{}, db *mongo.Database) RPCResponse {
 	var installmentData InstallmentPayment
 	json.Unmarshal(GetRaw(params), &installmentData)
 	if installmentData.InstallmentID.IsZero() || installmentData.CardID.IsZero() {
 		return RPCResponse{Code: 1, Message: "Missing one of params"}
 	}
-	var cardData BCard
+	var cardData Card
 	db.Collection("Cards").FindOne(context.TODO(), bson.M{"_id": installmentData.CardID}).Decode(&cardData)
 
 	var installment BInstallment
@@ -93,9 +93,9 @@ func InstallmentPay(params interface{}, db *mongo.Database) RPCResponse {
 	return RPCResponse{Code: 0, Message: "Successfully paid installment"}
 }
 
-func InstallmentsGet(ownerID primitive.ObjectID, db *mongo.Database) ([]JInstallment, error) {
+func InstallmentsGet(ownerID primitive.ObjectID, db *mongo.Database) ([]Installment, error) {
 	var installments []BInstallment
-	var jinstallments []JInstallment
+	var jinstallments []Installment
 	curr, err := db.Collection("Installments").Find(context.TODO(), bson.M{"ownerid": ownerID})
 	curr.All(context.TODO(), &installments)
 	for _, i := range installments {

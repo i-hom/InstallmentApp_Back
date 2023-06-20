@@ -22,60 +22,67 @@ type RPCResponse struct {
 	Data    interface{} `json:"data,omitempty"`
 }
 
+type Controller struct {
+	UserModel        *User
+	CardModel        *Card
+	InstallmentModel *Installment
+	db               *mongo.Database
+}
+
 func WebServer() {
-	urls := []string{"192.168.0.77:7777", "192.168.0.162:7777", "192.168.233.88:7777", "localhost:7777"}
-	url := urls[0]
+	var ctrl Controller
+
+	var conn *mongo.Client
+	ctrl.db, conn = DataBase("Installment_Front")
+	defer conn.Disconnect(context.TODO())
+
+	url := "0.0.0.0:7777"
 	fmt.Printf("Server started! %s/EndPoint", url)
-	http.HandleFunc("/EndPoint", Handler)
+	http.HandleFunc("/EndPoint", ctrl.Handler)
 	if err := http.ListenAndServe(url, nil); err != nil {
 		log.Fatal(err)
 	}
 }
 
-func DataBase() *mongo.Client {
+func DataBase(db_name string) (*mongo.Database, *mongo.Client) {
 	serverAPI := options.ServerAPI(options.ServerAPIVersion1)
 	opts := options.Client().ApplyURI("mongodb://localhost:27017").SetServerAPIOptions(serverAPI)
 	conn, err := mongo.Connect(context.TODO(), opts)
 	if err != nil {
-		panic(err)
+		log.Panic(err)
 	}
-	return conn
+	return conn.Database(db_name), conn
 }
 
-func Handler(w http.ResponseWriter, r *http.Request) {
+func (ctrl *Controller) Handler(w http.ResponseWriter, r *http.Request) {
 	data, _ := io.ReadAll(r.Body)
 	var request RPCRequest
 	var response RPCResponse
-	conn := DataBase()
-	db := conn.Database("Installment_App")
 	json.Unmarshal(data, &request)
 
 	switch request.Method {
 	case "card.add":
 		{
-			response = CardAdd(request.Params, db)
+			response = ctrl.CardModel.Add(request.Params, ctrl.db)
 		}
 		break
 	case "installment.pay":
 		{
-			response = InstallmentPay(request.Params, db)
+			response = ctrl.InstallmentModel.Pay(request.Params, ctrl.db)
 		}
 		break
 	case "user.get":
-		{
-			response = UserGet(request.Params, db)
-		}
+		response = ctrl.UserModel.Get(request.Params, ctrl.db)
+
 		break
 	default:
-		{
-			response = RPCResponse{Code: 1, Message: "Method not found"}
-		}
+		response = RPCResponse{Code: 1, Message: "Method not found"}
+
 	}
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(response); err != nil {
 		log.Printf("Failed to encode JSON response: %v", err)
 	}
-	defer conn.Disconnect(context.TODO())
 }
 
 func GetRaw(params interface{}) []byte {

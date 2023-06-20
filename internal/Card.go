@@ -10,7 +10,7 @@ import (
 
 //==================BSON=======================
 
-type BCard struct {
+type Card struct {
 	ID      primitive.ObjectID `bson:"_id"`
 	Number  string             `json:"number"`
 	ExpDate string             `json:"expDate"`
@@ -26,7 +26,7 @@ type AddCard struct {
 	OwnerId primitive.ObjectID `bson:"ownerid"`
 }
 
-func CardAdd(params interface{}, db *mongo.Database) RPCResponse {
+func (card *Card) Add(params interface{}, db *mongo.Database) RPCResponse {
 	var cardData AddCard
 	json.Unmarshal(GetRaw(params), &cardData)
 
@@ -45,8 +45,8 @@ func CardAdd(params interface{}, db *mongo.Database) RPCResponse {
 	return RPCResponse{Code: 0, Message: "Card added"}
 }
 
-func CardsGet(ownerID primitive.ObjectID, db *mongo.Database) []BCard {
-	var cards []BCard
+func CardsGet(ownerID primitive.ObjectID, db *mongo.Database) []Card {
+	var cards []Card
 	curr, _ := db.Collection("Cards").Find(context.TODO(), bson.M{"ownerid": ownerID})
 	curr.All(context.TODO(), &cards)
 	return cards

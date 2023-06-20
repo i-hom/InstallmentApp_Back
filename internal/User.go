@@ -19,8 +19,8 @@ type BUser struct {
 	Password    string             `json:"password"`
 }
 
-func (user *BUser) ToJUser() JUser {
-	return JUser{
+func (user *BUser) ToJUser() User {
+	return User{
 		ID:          user.ID,
 		FullName:    user.FullName,
 		PhoneNumber: user.PhoneNumber,
@@ -31,7 +31,7 @@ func (user *BUser) ToJUser() JUser {
 
 //===================JSON=======================
 
-type JUser struct {
+type User struct {
 	ID          primitive.ObjectID `bson:"_id"`
 	FullName    string             `json:"fullName"`
 	PhoneNumber string             `json:"phoneNumber"`
@@ -46,7 +46,7 @@ type UserLog struct {
 	Password    string `json:"password"`
 }
 
-func UserGet(params interface{}, db *mongo.Database) RPCResponse {
+func (user *User) Get(params interface{}, db *mongo.Database) RPCResponse {
 	var userAuth UserLog
 	json.Unmarshal(GetRaw(params), &userAuth)
 	if userAuth.PhoneNumber == "" || userAuth.Password == "" {
@@ -62,7 +62,7 @@ func UserGet(params interface{}, db *mongo.Database) RPCResponse {
 		return RPCResponse{Data: BUser{}}
 	}
 
-	var juser JUser
+	var juser User
 	juser = buser.ToJUser()
 	juser.Installment, _ = InstallmentsGet(buser.ID, db)
 	juser.Card = CardsGet(buser.ID, db)
