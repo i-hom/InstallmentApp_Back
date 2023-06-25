@@ -1,11 +1,10 @@
-package installment_back
+package models
 
 import (
-	"context"
 	"encoding/json"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
+	"installment_back/src"
 )
 
 //==================BSON=======================
@@ -37,8 +36,8 @@ type User struct {
 	PhoneNumber string             `json:"phoneNumber"`
 	PassID      string             `json:"passId"`
 	CashBack    int                `json:"cashBack"`
-	Installment []JInstallment     `json:"installments"`
-	Card        []BCard            `json:"cards"`
+	Installment []Installment      `json:"installments"`
+	Card        []Card             `json:"cards"`
 }
 
 type UserLog struct {
@@ -46,25 +45,23 @@ type UserLog struct {
 	Password    string `json:"password"`
 }
 
-func (user *User) Get(params interface{}, db *mongo.Database) RPCResponse {
+func (user *User) Get(params interface{}, db *src.DataBase) src.RPCResponse {
 	var userAuth UserLog
-	json.Unmarshal(GetRaw(params), &userAuth)
-	if userAuth.PhoneNumber == "" || userAuth.Password == "" {
-		return RPCResponse{Code: 1, Message: "Missing one of params"}
-	}
-
 	var buser BUser
-	if db.Collection("Users").FindOne(context.TODO(), bson.M{"phonenumber": userAuth.PhoneNumber, "password": userAuth.Password}).Decode(&buser) != nil {
-		return RPCResponse{Code: 4, Message: "User not found"}
-	}
-
-	if buser.ID.IsZero() {
-		return RPCResponse{Data: BUser{}}
-	}
-
 	var juser User
+
+	json.Unmarshal(src.GetRaw(params), &userAuth)
+	if userAuth.PhoneNumber == "" || userAuth.Password == "" {
+		return src.Missing_parameter
+	}
+
+	db.FindOne("Users", bson.M{"phoneNumber": userAuth.PhoneNumber, "password": userAuth.Password}, &buser)
+	if buser.ID.IsZero() {
+		return src.RPCResponse{Data: BUser{}}
+	}
+
 	juser = buser.ToJUser()
 	juser.Installment, _ = InstallmentsGet(buser.ID, db)
 	juser.Card = CardsGet(buser.ID, db)
-	return RPCResponse{Data: juser}
+	return src.RPCResponse{Data: juser}
 }

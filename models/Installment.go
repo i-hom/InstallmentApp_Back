@@ -1,11 +1,10 @@
-package installment_back
+package models
 
 import (
-	"context"
 	"encoding/json"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
+	"installment_back/src"
 	"time"
 )
 
@@ -36,7 +35,7 @@ func (installment *BInstallment) ToJInstallment() Installment {
 type Installment struct {
 	ID             primitive.ObjectID `bson:"_id"`
 	ElmakonID      string             `json:"elmakonid"`
-	Item           JItem              `json:"item"`
+	Item           Item               `json:"item"`
 	Balance        int                `json:"balance"`
 	IsActive       bool               `json:"isActive"`
 	MonthlyPayment int                `json:"monthlyPayment"`
@@ -49,55 +48,60 @@ type InstallmentPayment struct {
 	Amount        int                `json:"amount"`
 }
 
-func (inst *Installment) Pay(params interface{}, db *mongo.Database) RPCResponse {
+func (inst *Installment) Pay(params interface{}, db *src.DataBase) src.RPCResponse {
 	var installmentData InstallmentPayment
-	json.Unmarshal(GetRaw(params), &installmentData)
+	json.Unmarshal(src.GetRaw(params), &installmentData)
+
 	if installmentData.InstallmentID.IsZero() || installmentData.CardID.IsZero() {
-		return RPCResponse{Code: 1, Message: "Missing one of params"}
+		return src.RPCResponse{Code: 1, Message: "Missing one of params"}
 	}
 	var cardData Card
-	db.Collection("Cards").FindOne(context.TODO(), bson.M{"_id": installmentData.CardID}).Decode(&cardData)
+	db.FindOne("Cards", bson.M{"_id": installmentData.CardID}, &cardData)
 
 	var installment BInstallment
-	db.Collection("Installments").FindOne(context.TODO(), bson.M{"_id": installmentData.InstallmentID}).Decode(&installment)
+	db.FindOne("Installments", bson.M{"_id": installmentData.InstallmentID}, &installment)
 
 	if cardData.Balance < installmentData.Amount {
-		return RPCResponse{Code: 3, Message: "Insufficient balance"}
+		return src.Insufficient_balance
 	}
-
 	if installment.Balance < installmentData.Amount {
-		return RPCResponse{Code: 6, Message: "U paid a lot"}
+		return src.Payment_greater_than_balance
 	}
 
 	cardData.Balance -= installmentData.Amount
 	installment.Balance -= installmentData.Amount
 
-	_, cardDeposit := db.Collection("Cards").UpdateOne(context.TODO(), bson.M{"_id": installmentData.CardID}, bson.M{"$set": cardData})
-	_, installmentDeposit := db.Collection("Installments").UpdateOne(context.TODO(), bson.M{"_id": installmentData.InstallmentID}, bson.M{"$set": installment})
+	installmentDeposit, err := db.Update("Installments", bson.M{"_id": installmentData.InstallmentID}, installment)
+	if err != nil {
+		return src.Failde_to_deposite
+	}
+	cardDeposit, err := db.Update("Cards", bson.M{"_id": installmentData.CardID}, cardData)
+	if err != nil {
+		return src.Failde_to_deposite
+	}
 
-	if cardDeposit != nil || installmentDeposit != nil {
-		return RPCResponse{Code: 5, Message: "Failed to deposit"}
+	if cardDeposit == nil || installmentDeposit == nil {
+		return src.Failde_to_deposite
 	}
 
 	if installment.Balance == 0 {
 		installment.IsActive = false
-		db.Collection("Installments").UpdateOne(context.TODO(), bson.M{"elmakonid": installment.ID}, bson.M{"$set": installment})
+		db.Update("Installments", bson.M{"elmakonid": installment.ID}, installment)
 	}
 
 	now := time.Now().Format("2006-01-02 15:04:05")
 
-	db.Collection("Payments").InsertOne(context.TODO(), Payment{
+	db.Insert("Payments", Payment{
 		installment.ElmakonID, installmentData.Amount, cardData.Number, now,
 	})
 
-	return RPCResponse{Code: 0, Message: "Successfully paid installment"}
+	return src.RPCResponse{Code: 0, Message: "Successfully paid installment"}
 }
 
-func InstallmentsGet(ownerID primitive.ObjectID, db *mongo.Database) ([]Installment, error) {
+func InstallmentsGet(ownerID primitive.ObjectID, db *src.DataBase) ([]Installment, error) {
 	var installments []BInstallment
 	var jinstallments []Installment
-	curr, err := db.Collection("Installments").Find(context.TODO(), bson.M{"ownerid": ownerID})
-	curr.All(context.TODO(), &installments)
+	err := db.FindAll("Installments", bson.M{"ownerid": ownerID}, &installments)
 	for _, i := range installments {
 		var installment = i.ToJInstallment()
 		installment.Item, _ = ItemGet(i.ItemID, db)

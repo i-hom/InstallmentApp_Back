@@ -1,10 +1,9 @@
-package installment_back
+package models
 
 import (
-	"context"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
+	"installment_back/src"
 )
 
 //==================BSON=======================
@@ -17,8 +16,8 @@ type BItem struct {
 	Category primitive.ObjectID `bson:"category"`
 }
 
-func (item *BItem) ToJItem() JItem {
-	return JItem{
+func (item *BItem) ToJItem() Item {
+	return Item{
 		Brand:    item.Brand,
 		FullName: item.FullName,
 		Image:    item.Image,
@@ -32,22 +31,24 @@ type Category struct {
 
 //==================JSON=======================
 
-type JItem struct {
+type Item struct {
 	Brand    string `json:"brand"`
 	FullName string `json:"fullName"`
 	Image    string `json:"image"`
 	Category string `json:"category"`
 }
 
-func ItemGet(id primitive.ObjectID, db *mongo.Database) (JItem, error) {
+func ItemGet(id primitive.ObjectID, db *src.DataBase) (Item, error) {
 	var item BItem
 	var category Category
-	var jItem JItem
-	if err := db.Collection("Items").FindOne(context.TODO(), bson.M{"_id": id}).Decode(&item); err != nil {
-		return JItem{}, err
+	var jItem Item
+	err := db.FindOne("Items", bson.M{"_id": id}, &item)
+	if err != nil {
+		return Item{}, err
 	}
-	if err := db.Collection("Category").FindOne(context.TODO(), bson.M{"_id": item.Category}).Decode(&category); err != nil {
-		return JItem{}, err
+	err = db.FindOne("Category", bson.M{"_id": item.Category}, &category)
+	if err != nil {
+		return Item{}, err
 	}
 	jItem = item.ToJItem()
 	jItem.Category = category.Name
