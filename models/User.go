@@ -1,10 +1,7 @@
 package models
 
 import (
-	"encoding/json"
-	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"installment_back/src"
 )
 
 //==================BSON=======================
@@ -43,25 +40,4 @@ type User struct {
 type UserLog struct {
 	PhoneNumber string `json:"phoneNumber"`
 	Password    string `json:"password"`
-}
-
-func (user *User) Get(params interface{}, db *src.DataBase) src.RPCResponse {
-	var userAuth UserLog
-	var buser BUser
-	var juser User
-
-	json.Unmarshal(src.GetRaw(params), &userAuth)
-	if userAuth.PhoneNumber == "" || userAuth.Password == "" {
-		return src.Missing_parameter
-	}
-
-	db.FindOne("Users", bson.M{"phoneNumber": userAuth.PhoneNumber, "password": userAuth.Password}, &buser)
-	if buser.ID.IsZero() {
-		return src.RPCResponse{Data: BUser{}}
-	}
-
-	juser = buser.ToJUser()
-	juser.Installment, _ = InstallmentsGet(buser.ID, db)
-	juser.Card = CardsGet(buser.ID, db)
-	return src.RPCResponse{Data: juser}
 }

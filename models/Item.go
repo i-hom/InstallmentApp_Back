@@ -1,9 +1,7 @@
 package models
 
 import (
-	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"installment_back/src"
 )
 
 //==================BSON=======================
@@ -36,21 +34,4 @@ type Item struct {
 	FullName string `json:"fullName"`
 	Image    string `json:"image"`
 	Category string `json:"category"`
-}
-
-func ItemGet(id primitive.ObjectID, db *src.DataBase) (Item, error) {
-	var item BItem
-	var category Category
-	var jItem Item
-	err := db.FindOne("Items", bson.M{"_id": id}, &item)
-	if err != nil {
-		return Item{}, err
-	}
-	err = db.FindOne("Category", bson.M{"_id": item.Category}, &category)
-	if err != nil {
-		return Item{}, err
-	}
-	jItem = item.ToJItem()
-	jItem.Category = category.Name
-	return jItem, nil
 }

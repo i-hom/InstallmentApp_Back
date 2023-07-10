@@ -1,7 +1,8 @@
-package src
+package controllers
 
 import (
 	"context"
+	"encoding/json"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -30,21 +31,20 @@ func (this *DataBase) Disconnect() {
 	this.conn.Disconnect(context.TODO())
 }
 
-func (this *DataBase) FindOne(collection_name string, query bson.M, result interface{}) error {
-	err := this.db.Collection(collection_name).FindOne(context.TODO(), query).Decode(&result)
-	if err != nil {
-		return err
+func (this *DataBase) FindOne(collection_name string, query bson.M) *mongo.SingleResult {
+	result := this.db.Collection(collection_name).FindOne(context.TODO(), query)
+	if result == nil {
+		return nil
 	}
-	return nil
+	return result
 }
 
-func (this *DataBase) FindAll(collection_name string, query bson.M, result interface{}) error {
+func (this *DataBase) FindAll(collection_name string, query bson.M) *mongo.Cursor {
 	curr, _ := this.db.Collection(collection_name).Find(context.TODO(), query)
-	err := curr.All(context.TODO(), &result)
-	if err != nil {
-		return err
+	if curr == nil {
+		return nil
 	}
-	return nil
+	return curr
 }
 
 func (this *DataBase) Insert(collection_name string, data interface{}) error {
@@ -69,4 +69,9 @@ func (this *DataBase) Delete(colletion_name string, query bson.M) error {
 		return err
 	}
 	return nil
+}
+
+func GetRaw(params interface{}) []byte {
+	data, _ := json.Marshal(params)
+	return data
 }

@@ -1,15 +1,4 @@
-package src
-
-type RPCRequest struct {
-	Method string      `json:"method"`
-	Params interface{} `json:"params"`
-}
-
-type RPCResponse struct {
-	Code    int         `json:"code,omitempty"`
-	Message string      `json:"msg,omitempty"`
-	Data    interface{} `json:"data,omitempty"`
-}
+package models
 
 var Missing_parameter = RPCResponse{Code: 1, Message: "Missing one of params"}
 var Invalid_parameter = RPCResponse{Code: 2, Message: "Invalid parameter"}
