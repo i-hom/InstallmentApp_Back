@@ -3,5 +3,8 @@ package main
 import "installment_back/src"
 
 func main() {
-	src.WebServer()
+	var server src.Server
+
+	server.Init()
+	server.Run()
 }

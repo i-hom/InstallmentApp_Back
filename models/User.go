@@ -28,13 +28,13 @@ func (user *BUser) ToJUser() User {
 //===================JSON=======================
 
 type User struct {
-	ID          primitive.ObjectID `bson:"_id"`
-	FullName    string             `json:"fullName"`
-	PhoneNumber string             `json:"phoneNumber"`
-	PassID      string             `json:"passId"`
-	CashBack    int                `json:"cashBack"`
-	Installment []Installment      `json:"installments"`
-	Card        []Card             `json:"cards"`
+	ID           primitive.ObjectID `bson:"_id"`
+	FullName     string             `json:"fullName"`
+	PhoneNumber  string             `json:"phoneNumber"`
+	PassID       string             `json:"passId"`
+	CashBack     int                `json:"cashBack"`
+	Installments []Installment      `json:"installments"`
+	Cards        []Card             `json:"cards"`
 }
 
 type UserLog struct {
