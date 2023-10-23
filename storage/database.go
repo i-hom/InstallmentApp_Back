@@ -33,20 +33,13 @@ func (db *DataBase) Disconnect() {
 	}
 }
 
-func (db *DataBase) FindOne(collectionName string, query bson.M) *mongo.SingleResult {
-	result := db.db.Collection(collectionName).FindOne(context.TODO(), query)
-	if result == nil {
-		return nil
-	}
-	return result
+func (db *DataBase) FindOne(collectionName string, query bson.M, data interface{}) error {
+	return db.db.Collection(collectionName).FindOne(context.TODO(), query).Decode(data)
 }
 
-func (db *DataBase) FindAll(collectionName string, query bson.M) *mongo.Cursor {
+func (db *DataBase) FindAll(collectionName string, query bson.M, data interface{}) error {
 	curr, _ := db.db.Collection(collectionName).Find(context.TODO(), query)
-	if curr == nil {
-		return nil
-	}
-	return curr
+	return curr.All(context.TODO(), data)
 }
 
 func (db *DataBase) Insert(collectionName string, data interface{}) error {
@@ -57,12 +50,12 @@ func (db *DataBase) Insert(collectionName string, data interface{}) error {
 	return nil
 }
 
-func (db *DataBase) Update(collectionName string, query bson.M, data interface{}) (*mongo.UpdateResult, error) {
+func (db *DataBase) Update(collectionName string, query bson.M, data interface{}) (int64, error) {
 	res, err := db.db.Collection(collectionName).UpdateOne(context.TODO(), query, bson.M{"$set": data})
 	if err != nil {
-		return res, err
+		return 0, err
 	}
-	return res, nil
+	return res.ModifiedCount, nil
 }
 
 func (db *DataBase) Delete(collectionName string, query bson.M) error {

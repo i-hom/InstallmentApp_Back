@@ -1,7 +1,6 @@
 package repositories
 
 import (
-	"context"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"installment_back/errors"
@@ -19,7 +18,7 @@ func NewInstallmentRepository(db *storage.DataBase) *InstallmentRepository {
 
 func (ir *InstallmentRepository) GetAll(ownerID primitive.ObjectID) ([]models.BInstallment, models.RPCResponse) {
 	var installments []models.BInstallment
-	if err := ir.db.FindAll("Installments", bson.M{"ownerid": ownerID}).All(context.TODO(), &installments); err != nil {
+	if err := ir.db.FindAll("Installments", bson.M{"ownerid": ownerID}, &installments); err != nil {
 		return []models.BInstallment{}, errors.Installment_not_found
 	}
 	return installments, errors.Success
@@ -27,7 +26,7 @@ func (ir *InstallmentRepository) GetAll(ownerID primitive.ObjectID) ([]models.BI
 
 func (ir *InstallmentRepository) Get(installmentID primitive.ObjectID) (models.BInstallment, models.RPCResponse) {
 	var installment models.BInstallment
-	if err := ir.db.FindOne("Installments", bson.M{"_id": installmentID}).Decode(&installment); err != nil {
+	if err := ir.db.FindOne("Installments", bson.M{"_id": installmentID}, &installment); err != nil {
 		return models.BInstallment{}, errors.Installment_not_found
 	}
 	return installment, errors.Success
@@ -51,7 +50,7 @@ func (ir *InstallmentRepository) Deposit(installmentID primitive.ObjectID, amoun
 	}
 
 	installmentDeposit, err := ir.db.Update("Installments", bson.M{"_id": installmentID}, installment)
-	if err != nil && installmentDeposit == nil {
+	if err != nil && installmentDeposit == 0 {
 		return errors.Failed_to_deposite
 	}
 	return errors.Success

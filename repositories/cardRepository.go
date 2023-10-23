@@ -1,7 +1,6 @@
 package repositories
 
 import (
-	"context"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"installment_back/errors"
@@ -27,7 +26,7 @@ func (cr *CardRepository) Add(cardData models.AddCard) models.RPCResponse {
 
 func (cr *CardRepository) GetAll(ownerID primitive.ObjectID) ([]models.Card, models.RPCResponse) {
 	var cards []models.Card
-	if err := cr.db.FindAll("Cards", bson.M{"ownerid": ownerID}).All(context.TODO(), &cards); err != nil {
+	if err := cr.db.FindAll("Cards", bson.M{"ownerid": ownerID}, &cards); err != nil {
 		return []models.Card{}, errors.Failed_to_get_cards
 	}
 	return cards, errors.Success
@@ -35,7 +34,7 @@ func (cr *CardRepository) GetAll(ownerID primitive.ObjectID) ([]models.Card, mod
 
 func (cr *CardRepository) Get(cardID primitive.ObjectID) (models.Card, models.RPCResponse) {
 	var card models.Card
-	if err := cr.db.FindOne("Cards", bson.M{"_id": cardID}).Decode(&card); err != nil {
+	if err := cr.db.FindOne("Cards", bson.M{"_id": cardID}, &card); err != nil {
 		return models.Card{}, errors.Card_not_found
 	}
 	return card, errors.Success
@@ -43,7 +42,7 @@ func (cr *CardRepository) Get(cardID primitive.ObjectID) (models.Card, models.RP
 
 func (cr *CardRepository) BalanceOperations(cardID primitive.ObjectID, amount int) models.RPCResponse {
 	var card models.Card
-	if err := cr.db.FindOne("Cards", bson.M{"_id": cardID}).Decode(&card); err != nil {
+	if err := cr.db.FindOne("Cards", bson.M{"_id": cardID}, &card); err != nil {
 		return errors.Card_not_found
 	}
 	card.Balance += amount

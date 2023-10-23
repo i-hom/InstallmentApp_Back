@@ -16,6 +16,6 @@ func NewUserRepository(db *storage.DataBase) *UserRepository {
 
 func (ur *UserRepository) Get(userAuth models.UserLog) (models.User, error) {
 	var user models.BUser
-	err := ur.db.FindOne("Users", bson.M{"phonenumber": userAuth.PhoneNumber, "password": userAuth.Password}).Decode(user)
+	err := ur.db.FindOne("Users", bson.M{"phonenumber": userAuth.PhoneNumber, "password": userAuth.Password}, &user)
 	return user.ToJUser(), err
 }

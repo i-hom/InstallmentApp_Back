@@ -1,7 +1,6 @@
 package repositories
 
 import (
-	"context"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"installment_back/errors"
@@ -20,7 +19,7 @@ func NewPaymentRepository(db *storage.DataBase) *PaymentRepository {
 
 func (ip *PaymentRepository) GetAll(installmentID primitive.ObjectID) ([]models.Payment, models.RPCResponse) {
 	var payments []models.Payment
-	if err := ip.db.FindAll("Payments", bson.M{"installment_id": installmentID}).All(context.TODO(), &payments); err != nil {
+	if err := ip.db.FindAll("Payments", bson.M{"installment_id": installmentID}, &payments); err != nil {
 		return []models.Payment{}, errors.Payment_not_found
 	}
 	return payments, errors.Success
